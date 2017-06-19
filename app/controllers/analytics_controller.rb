@@ -103,14 +103,14 @@ class AnalyticsController < ApplicationController
 			current_action = post.actions.where(:name=>"share")[0]
 		end
 		puts JSON.pretty_generate(response)
+		print response["data"].count
 		while true do
-			response["data"].each do |share|
-				# if User.where(:facebook_id=>share["from"]["id"]).count==0 then
-				# 	user = User.create(:facebook_id=>share["from"]["id"])
-				# 	current_action.users<<user
-				# else
-				# 	current_action.users<<User.where(:facebook_id=>share["from"]["id"])[0]
-				# end
+			if current_action.share != nil then
+				current_action.share.count+=response["data"].count
+				current_action.share.save
+			else
+				share = Share.create(:count=>response["data"].count,:action=>current_action)
+				current_action.share=share
 			end
 
 			if response.key?("paging") and response["paging"].key?("next") then
@@ -129,7 +129,7 @@ class AnalyticsController < ApplicationController
 			puts JSON.pretty_generate(response)
 			flag=false
 			response["data"].each do |post|
-				if Time.parse(post["created_time"]) < Time.now-7.day then
+				if Time.parse(post["created_time"]) < Time.now-1.month then
 					flag=true
 					break
 				end
