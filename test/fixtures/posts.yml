@@ -1,0 +1,9 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  post_id: MyString
+  timestamp: 2017-06-19 12:08:46
+
+two:
+  post_id: MyString
+  timestamp: 2017-06-19 12:08:46
