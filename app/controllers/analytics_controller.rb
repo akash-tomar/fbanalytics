@@ -6,10 +6,10 @@ class AnalyticsController < ApplicationController
 	@@access_token = "1310745515710301%7Cu1tg9K6caKp76vp80EAXmyHbcnE"
 
 	def index
-		# savePostsInDatabase
+		savePostsInDatabase
 		Post.all.each do |post|
-			# saveLikes(post,"likes")
-			# saveComments(post)
+			saveLikes(post)
+			saveComments(post)
 			saveShares(post)
 		end
 	end
@@ -36,8 +36,10 @@ class AnalyticsController < ApplicationController
 				if User.where(:facebook_id=>like["id"]).count==0 then
 					user = User.create(:facebook_id=>like["id"])
 					current_action.users<<user
+					current_action.save
 				else
 					current_action.users<<User.where(:facebook_id=>like["id"])[0]
+					current_action.save
 				end
 			end
 
@@ -70,10 +72,17 @@ class AnalyticsController < ApplicationController
 		while true do
 			response["data"].each do |comment|
 				if User.where(:facebook_id=>comment["from"]["id"]).count==0 then
-					user = User.create(:facebook_id=>comment["from"]["id"])
+					user = User.create(:facebook_id=>comment["from"]["id"],:last_activity=>comment["created_time"])
 					current_action.users<<user
+					current_action.save
 				else
-					current_action.users<<User.where(:facebook_id=>comment["from"]["id"])[0]
+					user = User.where(:facebook_id=>comment["from"]["id"])[0]
+					if (user.last_activity==nil) or (user.last_activity<comment["created_time"]) then
+						user.last_activity = comment["created_time"]
+						user.save
+					end
+					current_action.users<<user
+					current_action.save
 				end
 			end
 
@@ -111,6 +120,7 @@ class AnalyticsController < ApplicationController
 			else
 				share = Share.create(:count=>response["data"].count,:action=>current_action)
 				current_action.share=share
+				current_action.save
 			end
 
 			if response.key?("paging") and response["paging"].key?("next") then
